@@ -1,9 +1,7 @@
 package com.example.android.habittracker;
 
-import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -36,28 +34,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mDbHelper = new HabitDbHelper(this);
-        displayDatabaseInfo();
+        displayDatabaseInfo(mDbHelper.readAllHabits());
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        displayDatabaseInfo();
+        displayDatabaseInfo(mDbHelper.readAllHabits());
     }
 
-    private void displayDatabaseInfo() {
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        String[] projection = {
-                HabitEntry._ID,
-                HabitEntry.COLUMN_HABIT_NAME,
-                HabitEntry.COLUMN_HABIT_FREQUENCY_AMOUNT,
-                HabitEntry.COLUMN_HABIT_FREQUENCY_INTERVAL,
-                HabitEntry.COLUMN_HABIT_DATE};
-
-        Cursor cursor = db.query(HabitEntry.TABLE_NAME, projection,
-                null, null, null, null, null);
-
+    private void displayDatabaseInfo(Cursor cursor) {
         try {
             // Display the number of rows in the Cursor (which reflects the number of rows in the
             // habits table in the database).
@@ -102,33 +88,6 @@ public class MainActivity extends AppCompatActivity {
         return dateFormatter.format(time);
     }
 
-    private void insertHabit() {
-        // Gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        // Create a new map of values, where column names are the keys
-        ContentValues values = new ContentValues();
-        values.put(HabitEntry.COLUMN_HABIT_NAME, "Drink Coffee");
-        values.put(HabitEntry.COLUMN_HABIT_FREQUENCY_AMOUNT, 2);
-        values.put(HabitEntry.COLUMN_HABIT_FREQUENCY_INTERVAL, "cups");
-        values.put(HabitEntry.COLUMN_HABIT_DATE, 1491857185428L);
-
-        // Insert the new row, returning the primary key value of the new row
-        db.insert(HabitEntry.TABLE_NAME, null, values);
-
-        values.put(HabitEntry.COLUMN_HABIT_NAME, "Run");
-        values.put(HabitEntry.COLUMN_HABIT_FREQUENCY_AMOUNT, 3);
-        values.put(HabitEntry.COLUMN_HABIT_FREQUENCY_INTERVAL, "miles");
-        values.put(HabitEntry.COLUMN_HABIT_DATE, 149185718000L);
-        db.insert(HabitEntry.TABLE_NAME, null, values);
-    }
-
-    private void deleteAllHabits() {
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        db.delete(HabitEntry.TABLE_NAME, null, null);
-        db.execSQL("DELETE FROM SQLITE_SEQUENCE WHERE NAME = '" + HabitEntry.TABLE_NAME + "'");
-        displayDatabaseInfo();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -144,12 +103,13 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-                insertHabit();
-                displayDatabaseInfo();
+                mDbHelper.insertDummyHabits();
+                displayDatabaseInfo(mDbHelper.readAllHabits());
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                deleteAllHabits();
+                mDbHelper.deleteAllHabits();
+                displayDatabaseInfo(mDbHelper.readAllHabits());
                 return true;
         }
         return super.onOptionsItemSelected(item);
